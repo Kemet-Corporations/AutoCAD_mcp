@@ -13,8 +13,12 @@ revit-test/
 autocad-plugin/src/AutoCADMCP.Server/publish/
 
 # Staged bundle and installer artifacts (rebuilt by build/build-all.ps1).
-# The per-target DLLs under dist/net48 and dist/net8.0-windows ARE committed,
-# so users can install without a .NET SDK.
+# KEMET: the per-target DLLs (dist/net48, dist/net8.0-windows, dist/net10.0-windows) are no longer
+# committed (upstream committed a snapshot). Kemet installs from the office share, and committed build
+# output made every build look like an uncommitted change, which stops publish-share.ps1.
+autocad-plugin/dist/net48/
+autocad-plugin/dist/net8.0-windows/
+autocad-plugin/dist/net10.0-windows/
 autocad-plugin/dist/AutoCADMCPPlugin.bundle/
 autocad-plugin/dist/server/
 autocad-plugin/dist/agent/

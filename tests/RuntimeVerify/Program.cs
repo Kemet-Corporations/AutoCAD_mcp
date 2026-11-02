@@ -33,7 +33,7 @@ Usage:
   dotnet run --project tests/RuntimeVerify -- --port 8081
 
 Options:
-  --host <host>     default: localhost
+  --host <host>     default: 127.0.0.1
   --port <port>     default: 8081
   --all             sweep every registered tool with no arguments
   -v, --verbose     print each result payload
@@ -41,7 +41,7 @@ Options:
             return 0;
         }
 
-        string host = Option(args, "--host") ?? "localhost";
+        string host = Option(args, "--host") ?? "127.0.0.1"; // KEMET: see AutoCADMCP.Server/Program.cs
         int port = int.TryParse(Option(args, "--port"), out int p) && p is > 0 and <= 65535 ? p : 8081;
         bool all = args.Contains("--all");
         bool verbose = args.Any(a => a is "-v" or "--verbose");

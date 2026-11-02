@@ -10,7 +10,7 @@ public sealed record Config(string Host, int Port, string Model, Effort Effort, 
 {
     public static Config FromEnvironment()
     {
-        string host = Environment.GetEnvironmentVariable("AUTOCAD_MCP_HOST") ?? "localhost";
+        string host = Environment.GetEnvironmentVariable("AUTOCAD_MCP_HOST") ?? "127.0.0.1"; // KEMET: see AutoCADMCP.Server/Program.cs
 
         int port = int.TryParse(Environment.GetEnvironmentVariable("AUTOCAD_MCP_PORT"), out int p)
                    && p is > 0 and <= 65535 ? p : 8081;
@@ -124,7 +124,7 @@ Usage:
 
 Environment:
   ANTHROPIC_API_KEY            resolved by the Anthropic SDK
-  AUTOCAD_MCP_HOST             default: localhost
+  AUTOCAD_MCP_HOST             default: 127.0.0.1
   AUTOCAD_MCP_PORT             default: 8081
   AUTOCAD_AGENT_MODEL          default: claude-opus-5
   AUTOCAD_AGENT_EFFORT         low | medium | high | max   default: high

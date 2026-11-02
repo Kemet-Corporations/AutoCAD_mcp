@@ -30,7 +30,11 @@ public static class Program
 
         string host = GetOption(args, "--host")
                       ?? Environment.GetEnvironmentVariable("AUTOCAD_MCP_HOST")
-                      ?? "localhost";
+                      // KEMET: 127.0.0.1, not "localhost". The plugin listens on
+                      // IPv4 loopback only; "localhost" resolves to ::1 first, and on
+                      // Windows a refused loopback connect takes ~2 s, so every call
+                      // paid that delay and --check (2 s budget) always failed.
+                      ?? "127.0.0.1";
 
         int port = ParsePort(GetOption(args, "--port")
                              ?? Environment.GetEnvironmentVariable("AUTOCAD_MCP_PORT"));
@@ -140,7 +144,7 @@ Usage:
   autocad-mcp-server --help
 
 Environment:
-  AUTOCAD_MCP_HOST        default: localhost
+  AUTOCAD_MCP_HOST        default: 127.0.0.1
   AUTOCAD_MCP_PORT        default: 8081
   AUTOCAD_MCP_TIMEOUT_MS  default: 120000
 

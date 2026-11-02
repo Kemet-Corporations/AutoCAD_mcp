@@ -1,0 +1,40 @@
+# Kemet fork of AutoCAD MCP
+
+This is Kemet Corporation's fork of the AutoCAD MCP engine, used by **Kemet CAD Addins** (the Kemet add-in that owns everything users see). It follows the same pattern as the Navisworks MCP: the engine runs in the background and the Kemet add-in provides the ribbon, the `Kemet - CAD MCP` window, the AI-app configurator, the silent updater and the office-share installer.
+
+| | |
+| --- | --- |
+| Forked from | `iwanschelokov-byte/AutoCAD_mcp` at `4b765b3` (itself a fork of `NCO-1986/AutoCAD_mcp` v2.0.0, which went offline on 18 Aug 2026) |
+| Licence | MIT, as declared in the upstream README. **The repository has no LICENSE file** (see Open items). |
+| AutoCAD | 2021–2027 from one bundle (net48 / net8.0-windows / net10.0-windows) |
+| Tools | 184, all kept |
+
+Every Kemet change is marked `KEMET:` in a code comment, so a search for `KEMET:` lists them all.
+
+## Changes
+
+| # | Area | Change | Why |
+| --- | --- | --- | --- |
+| 1 | `Core/Plugin.cs` | The TCP bridge starts automatically when the plugin loads. `MCPSTART` no longer asks for a port (it reads `AUTOCAD_MCP_PORT`, default 8081) and is now only for restarting. | Users forget `MCPSTART`, and an AI client cannot answer a port prompt. Matches the Navisworks MCP, whose bridge starts with Navisworks. The listener binds to loopback only. |
+| 2 | `Core/Plugin.cs` | The HTTP shim (port 8082, CORS `*`) is **off** unless `AUTOCAD_MCP_HTTP_PORT` is set. | With CORS `*`, any web page open in a browser on the PC could drive AutoCAD. MCP clients only use the TCP port. |
+| 3 | `PackageContents.xml` | New `ProductCode` and `UpgradeCode` (upstream used placeholder GUIDs `A1B2C3D4-…`); name `Kemet - CAD MCP Engine`; company Kemet Corporation. | Placeholder GUIDs can collide with any other bundle that copied them. The bundle folder name is unchanged, so installing over an upstream install replaces it instead of loading twice. |
+| 4 | `Core/Plugin.cs` | Build tag `2027.8-kemet.1`. | `system_status` and the load message identify the Kemet build. |
+
+## Open items
+
+- [ ] **Licence:** ask the fork's maintainer to add a LICENSE file (MIT), or add one here citing the README's declaration. Do this before distributing outside Kemet.
+- [ ] Per-session token on the TCP port (pattern from bimwright/dwg-mcp).
+- [ ] One undo group per write call.
+- [ ] Refuse writes when the active drawing changed mid-sequence (document binding).
+- [ ] Toolsets: core always on; 3D, sheet sets, groups/UCS, xdata as toggles in the Kemet window.
+- [ ] Guard `execute_command` behind approval; mark the 4 sheet-set tools experimental.
+- [ ] In-plugin `run_csharp`, off by default, approval required.
+- [ ] Settings and audit log still live in `%APPDATA%\AutoCADMCP\`; move under a Kemet folder once the Kemet window reads them.
+- [ ] Verify: `tests/RuntimeVerify` against a scratch DWG in AutoCAD 2024 and 2027.
+
+## Taking upstream updates
+
+The fork does not follow upstream automatically:
+1. Click **Sync fork** on GitHub (or merge `upstream/main` into `kemet`).
+2. Re-check every change listed above (search for `KEMET:`).
+3. Build, test, publish.

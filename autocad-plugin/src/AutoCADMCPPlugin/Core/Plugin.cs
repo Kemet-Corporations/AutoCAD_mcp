@@ -20,8 +20,8 @@ namespace AutoCADMCPPlugin.Core
     /// - HTTP loopback on <see cref="DefaultHttpPort"/> (default 8082) for
     ///   browser apps (POST /jsonrpc, with CORS + Chrome Private-Network-Access).
     ///
-    /// The HTTP listener is opt-out: set the env var
-    /// <c>AUTOCAD_MCP_HTTP_PORT=0</c> to disable it.
+    /// KEMET: the TCP server starts automatically when the plugin loads. The
+    /// HTTP listener is opt-in: set <c>AUTOCAD_MCP_HTTP_PORT</c> to enable it.
     /// </summary>
     public class Plugin : IExtensionApplication
     {
@@ -78,7 +78,7 @@ namespace AutoCADMCPPlugin.Core
         // exception, so no managed catch can intercept it. The active-document
         // check is now the first statement of the command, and the whole read
         // runs under one document lock.
-        public const string Build = "2027.8-custom";
+        public const string Build = "2027.8-kemet.1";
 
         public void Initialize()
         {
@@ -89,7 +89,12 @@ namespace AutoCADMCPPlugin.Core
 
             Editor ed = Application.DocumentManager.MdiActiveDocument?.Editor;
             ed?.WriteMessage($"\n[MCP] {PluginName} v{Version} (build {Build}) loaded.");
-            ed?.WriteMessage("\n[MCP] Use MCPSTART to start the server, MCPSTOP to stop it.");
+
+            // KEMET: the bridge starts with AutoCAD, like the Navisworks MCP.
+            // Upstream waited for MCPSTART plus a port prompt, which users forget
+            // and which an AI client cannot answer. The TCP listener binds to
+            // loopback only (SocketServer uses IPAddress.Loopback).
+            StartServers(ed);
         }
 
         public void Terminate()
@@ -98,10 +103,19 @@ namespace AutoCADMCPPlugin.Core
             StopServers();
         }
 
+        /// <summary>
+        /// Manual (re)start, for when the automatic start failed (for example
+        /// because port 8081 was taken by another AutoCAD) or after MCPSTOP.
+        /// KEMET: no port prompt; the port comes from AUTOCAD_MCP_PORT or 8081.
+        /// </summary>
         [CommandMethod("MCPSTART")]
         public static void StartCommand()
         {
-            Editor ed = Application.DocumentManager.MdiActiveDocument?.Editor;
+            StartServers(Application.DocumentManager.MdiActiveDocument?.Editor);
+        }
+
+        private static void StartServers(Editor ed)
+        {
             lock (_lock)
             {
                 if (_socketServer != null && _socketServer.IsRunning)
@@ -111,24 +125,7 @@ namespace AutoCADMCPPlugin.Core
                     return;
                 }
 
-                int port = DefaultPort;
-
-                // Allow user to specify a custom TCP port. HTTP port stays
-                // env-driven (most users won't ever change it).
-                PromptIntegerOptions opts = new PromptIntegerOptions("\n[MCP] Enter port number")
-                {
-                    DefaultValue = DefaultPort,
-                    AllowNone = true,
-                    AllowZero = false,
-                    AllowNegative = false,
-                    LowerLimit = 1024,
-                    UpperLimit = 65535
-                };
-
-                PromptIntegerResult result = ed?.GetInteger(opts);
-                if (result != null && result.Status == PromptStatus.OK)
-                    port = result.Value;
-
+                int port = ResolvePort("AUTOCAD_MCP_PORT", DefaultPort);
                 try
                 {
                     _socketServer = new SocketServer(port);
@@ -137,42 +134,33 @@ namespace AutoCADMCPPlugin.Core
                 }
                 catch (System.Exception ex)
                 {
-                    ed?.WriteMessage($"\n[MCP] Failed to start TCP server: {ex.Message}");
+                    _socketServer = null;
+                    ed?.WriteMessage(
+                        $"\n[MCP] Failed to start TCP server on port {port}: {ex.Message}" +
+                        "\n[MCP] Another AutoCAD may already be using it. Close it and run MCPSTART.");
                 }
 
-                // Start HTTP shim if not explicitly disabled.
-                int httpPort = ResolveHttpPort();
-                if (httpPort <= 0)
+                // KEMET: the HTTP shim is OFF unless AUTOCAD_MCP_HTTP_PORT is set
+                // to a port. Upstream turned it on by default with CORS "*", which
+                // lets any web page open in a browser on this PC drive AutoCAD.
+                // MCP clients only use the TCP port, so nothing is lost.
+                int httpPort = ResolvePort("AUTOCAD_MCP_HTTP_PORT", 0);
+                if (httpPort <= 0) return;
+
+                string allowedOrigins =
+                    Environment.GetEnvironmentVariable("AUTOCAD_MCP_HTTP_ORIGINS");
+                try
                 {
+                    _httpServer = new HttpListenerServer(httpPort, allowedOrigins);
+                    _httpServer.Start();
                     ed?.WriteMessage(
-                        "\n[MCP] HTTP shim disabled (AUTOCAD_MCP_HTTP_PORT=0).");
+                        $"\n[MCP] HTTP shim started on http://127.0.0.1:{httpPort}/jsonrpc" +
+                        $" (allowed origins: {(string.IsNullOrEmpty(allowedOrigins) ? "*" : allowedOrigins)})");
                 }
-                else
+                catch (System.Exception ex)
                 {
-                    string allowedOrigins =
-                        Environment.GetEnvironmentVariable("AUTOCAD_MCP_HTTP_ORIGINS");
-                    try
-                    {
-                        _httpServer = new HttpListenerServer(httpPort, allowedOrigins);
-                        _httpServer.Start();
-                        ed?.WriteMessage(
-                            $"\n[MCP] HTTP shim started on http://127.0.0.1:{httpPort}/jsonrpc");
-                        if (!string.IsNullOrEmpty(allowedOrigins) && allowedOrigins != "*")
-                        {
-                            ed?.WriteMessage(
-                                $"\n[MCP] HTTP allowed origins: {allowedOrigins}");
-                        }
-                        else
-                        {
-                            ed?.WriteMessage(
-                                "\n[MCP] HTTP allowed origins: * (open) — set AUTOCAD_MCP_HTTP_ORIGINS to restrict.");
-                        }
-                    }
-                    catch (System.Exception ex)
-                    {
-                        ed?.WriteMessage(
-                            $"\n[MCP] Failed to start HTTP shim: {ex.Message}");
-                    }
+                    _httpServer = null;
+                    ed?.WriteMessage($"\n[MCP] Failed to start HTTP shim: {ex.Message}");
                 }
             }
         }
@@ -223,12 +211,11 @@ namespace AutoCADMCPPlugin.Core
             }
         }
 
-        private static int ResolveHttpPort()
+        private static int ResolvePort(string envVar, int fallback)
         {
-            string raw = Environment.GetEnvironmentVariable("AUTOCAD_MCP_HTTP_PORT");
-            if (string.IsNullOrWhiteSpace(raw)) return DefaultHttpPort;
-            if (int.TryParse(raw, out int p)) return p;
-            return DefaultHttpPort;
+            string raw = Environment.GetEnvironmentVariable(envVar);
+            if (string.IsNullOrWhiteSpace(raw)) return fallback;
+            return int.TryParse(raw, out int p) && p >= 0 && p <= 65535 ? p : fallback;
         }
 
         private static void StopServers()

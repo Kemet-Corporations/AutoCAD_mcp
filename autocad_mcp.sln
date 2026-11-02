@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoCADMCPPlugin", "autocad
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoCADMCP.Server", "autocad-plugin\src\AutoCADMCP.Server\AutoCADMCP.Server.csproj", "{5FE078C6-9F37-481E-8696-52CAC6CB0D15}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoCADMCP.Configurator", "autocad-plugin\src\AutoCADMCP.Configurator\AutoCADMCP.Configurator.csproj", "{B875E187-877A-45F3-A7C7-2732D8B1C2CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 		{5FE078C6-9F37-481E-8696-52CAC6CB0D15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5FE078C6-9F37-481E-8696-52CAC6CB0D15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5FE078C6-9F37-481E-8696-52CAC6CB0D15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B875E187-877A-45F3-A7C7-2732D8B1C2CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B875E187-877A-45F3-A7C7-2732D8B1C2CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B875E187-877A-45F3-A7C7-2732D8B1C2CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B875E187-877A-45F3-A7C7-2732D8B1C2CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +38,7 @@ Global
 		{2BA2EBB9-8E6D-A33C-2E7B-7704299345D3} = {7DDB9804-8DA2-FCF0-5DDC-E8B5552E6620}
 		{AAF004F1-1338-DC48-7DB4-CA348577C554} = {2BA2EBB9-8E6D-A33C-2E7B-7704299345D3}
 		{5FE078C6-9F37-481E-8696-52CAC6CB0D15} = {2BA2EBB9-8E6D-A33C-2E7B-7704299345D3}
+		{B875E187-877A-45F3-A7C7-2732D8B1C2CC} = {2BA2EBB9-8E6D-A33C-2E7B-7704299345D3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E004172A-9782-441F-AAC1-75CBFE59C332}

@@ -18,6 +18,7 @@ autocad-plugin/src/AutoCADMCP.Server/publish/
 autocad-plugin/dist/AutoCADMCPPlugin.bundle/
 autocad-plugin/dist/server/
 autocad-plugin/dist/agent/
+autocad-plugin/dist/configurator/
 autocad-plugin/dist/*.exe
 autocad-plugin/dist/*.zip
 

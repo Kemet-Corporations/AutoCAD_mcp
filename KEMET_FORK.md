@@ -21,6 +21,7 @@ Every Kemet change is marked `KEMET:` in a code comment, so a search for `KEMET:
 | 4 | `Core/Plugin.cs` | Build tag `2027.8-kemet.1`. | `system_status` and the load message identify the Kemet build. |
 | 5 | `build/build-all.ps1`, `autocad-plugin/install.bat` | The AutoCAD 2027 leg is always built. `build-all.ps1` stops if the .NET 10 SDK is missing (pass `-IncludeNet10:$false` to skip 2027 on purpose); `install.bat` passes `-p:IncludeNet10=true`. | Kemet's target is AutoCAD 2021–2027 from one bundle. Upstream silently left 2027 out when the build PC lacked the .NET 10 SDK (`build-all.ps1`) or AutoCAD 2027 (`install.bat`), so the bundle depended on which PC built it. Building 2027 needs the .NET 10 SDK only, not AutoCAD 2027. |
 | 6 | `AutoCADMCP.Server/Program.cs` (also the agent and RuntimeVerify) | The server connects to `127.0.0.1` by default instead of `localhost`. | The plugin listens on IPv4 loopback only. `localhost` resolves to `::1` first, and on Windows a refused loopback connect takes about 2 s, so every call paid that delay and `--check` (2 s budget) always reported the plugin as down. Found on the first live test. |
+| 7 | New project `AutoCADMCP.Configurator` (`autocad-mcp-configurator.exe`); `build-all.ps1` publishes it to `dist\configurator`; solution and `.gitignore` | Connects AI apps to the server: `--status`, `--configure --clients <id>`, `--remove --clients <id>`, `--detect`, `--dry-run`. Writes the `autocad-mcp` entry for Claude Desktop (installer and Microsoft Store), Claude Code, Codex, Cursor, VS Code, Windsurf, Gemini CLI, Antigravity, opencode, Kimi Code and ZCode, with a backup (`<config>.bak_autocadmcp_<utc>`) before every write. | Kemet-AutoCAD-Addons' Connect buttons drive it exactly like the Navisworks window drives NavisHelper's configurator, so `AiApps.cs` is reused unchanged. Ported from the Kemet NavisHelper fork's configurator (MIT, see the project's `NOTICE.md`); the NavisHelper-only parts (server versioning, `--doctor`, `.mcpb` check) are left out. |
 
 **Supported AutoCAD versions:** 2021–2027. 2020 and older are out of scope.
 
@@ -28,7 +29,8 @@ Every Kemet change is marked `KEMET:` in a code comment, so a search for `KEMET:
 
 - [ ] **Licence:** ask the fork's maintainer to add a LICENSE file (MIT), or add one here citing the README's declaration. Do this before distributing outside Kemet.
 - [ ] Per-session token on the TCP port (pattern from bimwright/dwg-mcp).
-- [ ] One undo group per write call.
+- [x] One undo group per write call: **already upstream behaviour.** Checked live on AutoCAD 2024: each tool call is one "Group of commands" in the undo list, and Ctrl+Z reverts it.
+- [ ] Two AutoCADs open at once: the second cannot take port 8081, so its bridge does not start (it says so on the command line) and AI apps only reach the first. A per-process port or pipe, like NavisHelper's `navishelper-mcp-<pid>`, would fix it.
 - [ ] Refuse writes when the active drawing changed mid-sequence (document binding).
 - [ ] Toolsets: core always on; 3D, sheet sets, groups/UCS, xdata as toggles in the Kemet window.
 - [ ] Guard `execute_command` behind approval; mark the 4 sheet-set tools experimental.

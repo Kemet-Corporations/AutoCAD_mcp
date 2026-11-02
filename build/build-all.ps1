@@ -68,6 +68,8 @@ $ProjectDir = Join-Path $RepoRoot 'autocad-plugin\src\AutoCADMCPPlugin'
 $Project    = Join-Path $ProjectDir 'AutoCADMCPPlugin.csproj'
 $ServerProj = Join-Path $RepoRoot 'autocad-plugin\src\AutoCADMCP.Server\AutoCADMCP.Server.csproj'
 $AgentProj  = Join-Path $RepoRoot 'autocad-plugin\src\AutoCADMCP.Agent\AutoCADMCP.Agent.csproj'
+# KEMET: connects AI apps to the server (used by Kemet-AutoCAD-Addons' Connect buttons).
+$ConfigProj = Join-Path $RepoRoot 'autocad-plugin\src\AutoCADMCP.Configurator\AutoCADMCP.Configurator.csproj'
 $BundleSrc  = Join-Path $RepoRoot 'autocad-plugin\config\AutoCADMCPPlugin.bundle'
 $DistDir    = Join-Path $RepoRoot 'autocad-plugin\dist'
 
@@ -160,6 +162,24 @@ if (-not $SkipServer -and (Test-Path $ServerProj)) {
 }
 
 # ---------------------------------------------------------------------------
+# KEMET: AI-app configurator (published next to the server; -SkipServer skips both)
+# ---------------------------------------------------------------------------
+$configExe = $null
+if (-not $SkipServer -and (Test-Path $ConfigProj)) {
+    Write-Step 'Building AI-app configurator'
+
+    $configOut = Join-Path $DistDir 'configurator'
+    & dotnet publish $ConfigProj -c $Configuration -o $configOut --nologo
+    if ($LASTEXITCODE -ne 0) { throw "Configurator publish failed ($LASTEXITCODE)." }
+
+    $configExe = Join-Path $configOut 'autocad-mcp-configurator.exe'
+    if (Test-Path $configExe) {
+        $size = [math]::Round((Get-Item $configExe).Length / 1MB, 1)
+        Write-Ok "autocad-mcp-configurator.exe ($size MB, self-contained)"
+    }
+}
+
+# ---------------------------------------------------------------------------
 # AutoCode agent (optional second-stage server; -IncludeAgent to build it)
 # ---------------------------------------------------------------------------
 $agentExe = $null
@@ -187,6 +207,7 @@ if ($Sign) {
             & $signScript -Path (Join-Path $binRoot "$t\AutoCADMCPPlugin.dll")
         }
         if ($serverExe -and (Test-Path $serverExe)) { & $signScript -Path $serverExe }
+        if ($configExe -and (Test-Path $configExe)) { & $signScript -Path $configExe }
         if ($agentExe -and (Test-Path $agentExe)) { & $signScript -Path $agentExe }
         Write-Ok 'Signing complete.'
     }
@@ -264,6 +285,9 @@ if ($agentExe -and (Test-Path $agentExe)) {
 }
 if ($serverExe -and (Test-Path $serverExe)) {
     Write-Ok ("{0,-16} {1}" -f 'mcp server', 'self-contained exe')
+}
+if ($configExe -and (Test-Path $configExe)) {
+    Write-Ok ("{0,-16} {1}" -f 'configurator', 'self-contained exe (connects AI apps)')
 }
 
 if (-not $SkipBundle) {

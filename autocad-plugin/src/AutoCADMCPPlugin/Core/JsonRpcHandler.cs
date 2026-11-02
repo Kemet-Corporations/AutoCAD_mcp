@@ -227,7 +227,7 @@ namespace AutoCADMCPPlugin.Core
                 ["result"] = result ?? JValue.CreateNull(),
                 ["id"] = id != null ? JToken.FromObject(id) : JValue.CreateNull()
             };
-            return response.ToString(Formatting.None);
+            return JsonConvert.SerializeObject(response, Formatting.None);
         }
 
         private static string CreateErrorResponse(object id, int code, string message, ErrorCode errorCode)
@@ -249,7 +249,7 @@ namespace AutoCADMCPPlugin.Core
                 ["error"] = error,
                 ["id"] = id != null ? JToken.FromObject(id) : JValue.CreateNull()
             };
-            return response.ToString(Formatting.None);
+            return JsonConvert.SerializeObject(response, Formatting.None);
         }
     }
 }

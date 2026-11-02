@@ -54,7 +54,7 @@ namespace AutoCADMCPPlugin.Core
                 lock (_writeLock)
                 {
                     Directory.CreateDirectory(Settings.DataDir);
-                    File.AppendAllText(LogPath, record.ToString(Formatting.None) + Environment.NewLine);
+                    File.AppendAllText(LogPath, JsonConvert.SerializeObject(record, Formatting.None) + Environment.NewLine);
                 }
             }
             catch

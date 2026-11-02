@@ -84,7 +84,11 @@
 
   <!-- Newtonsoft.Json for net48 / net8 (AutoCAD 2021-2026) via NuGet -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net10.0-windows'">
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.*" />
+    <!-- KEMET: pinned to 13.0.1, the oldest 13.x. AutoCAD 2025+ loads its own Newtonsoft.Json first, and
+         every 13.x has assembly version 13.0.0.0, so the plug-in runs against AutoCAD's copy, not ours.
+         Built against 13.0.* (13.0.4) it called JToken.ToString(Formatting), which AutoCAD 2026's copy
+         does not have: every call failed with "Method not found". -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <!-- ============================================================ -->
@@ -105,7 +109,7 @@
        package but never copy it to the output. AutoCAD still loads its own copy
        at runtime, which is what keeps the signatures consistent. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows' And !Exists('$(AutoCADPath2027)\Newtonsoft.Json.dll')">
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.*" ExcludeAssets="runtime" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" ExcludeAssets="runtime" /><!-- KEMET: pinned, see above -->
   </ItemGroup>
 
   <!-- System.Drawing.Common needed for .NET 8/10 (built-in for net48) -->

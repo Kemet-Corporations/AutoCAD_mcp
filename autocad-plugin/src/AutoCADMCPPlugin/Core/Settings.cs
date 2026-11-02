@@ -84,7 +84,7 @@ namespace AutoCADMCPPlugin.Core
                         ["confirmDestructive"] = ConfirmDestructive,
                         ["auditLog"] = AuditLog
                     };
-                    File.WriteAllText(SettingsPath, json.ToString(Formatting.Indented));
+                    File.WriteAllText(SettingsPath, JsonConvert.SerializeObject(json, Formatting.Indented));
                 }
                 catch
                 {

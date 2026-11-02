@@ -19,7 +19,8 @@ echo       AutoCAD 2027 is installed - it compiles against the Newtonsoft.Json
 echo       that ships with 2027, so it needs 2027 on this machine plus the
 echo       .NET SDK 10.0.
 echo.
-dotnet build "%PROJECT_DIR%\AutoCADMCPPlugin.csproj" -c Release
+:: KEMET: always build the AutoCAD 2027 leg (needs the .NET 10 SDK, not AutoCAD 2027).
+dotnet build "%PROJECT_DIR%\AutoCADMCPPlugin.csproj" -c Release -p:IncludeNet10=true
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo BUILD FAILED. Please check errors above.

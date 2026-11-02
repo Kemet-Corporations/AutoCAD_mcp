@@ -19,6 +19,9 @@ Every Kemet change is marked `KEMET:` in a code comment, so a search for `KEMET:
 | 2 | `Core/Plugin.cs` | The HTTP shim (port 8082, CORS `*`) is **off** unless `AUTOCAD_MCP_HTTP_PORT` is set. | With CORS `*`, any web page open in a browser on the PC could drive AutoCAD. MCP clients only use the TCP port. |
 | 3 | `PackageContents.xml` | New `ProductCode` and `UpgradeCode` (upstream used placeholder GUIDs `A1B2C3D4-…`); name `Kemet - CAD MCP Engine`; company Kemet Corporation. | Placeholder GUIDs can collide with any other bundle that copied them. The bundle folder name is unchanged, so installing over an upstream install replaces it instead of loading twice. |
 | 4 | `Core/Plugin.cs` | Build tag `2027.8-kemet.1`. | `system_status` and the load message identify the Kemet build. |
+| 5 | `build/build-all.ps1`, `autocad-plugin/install.bat` | The AutoCAD 2027 leg is always built. `build-all.ps1` stops if the .NET 10 SDK is missing (pass `-IncludeNet10:$false` to skip 2027 on purpose); `install.bat` passes `-p:IncludeNet10=true`. | Kemet's target is AutoCAD 2021–2027 from one bundle. Upstream silently left 2027 out when the build PC lacked the .NET 10 SDK (`build-all.ps1`) or AutoCAD 2027 (`install.bat`), so the bundle depended on which PC built it. Building 2027 needs the .NET 10 SDK only, not AutoCAD 2027. |
+
+**Supported AutoCAD versions:** 2021–2027. 2020 and older are out of scope.
 
 ## Open items
 

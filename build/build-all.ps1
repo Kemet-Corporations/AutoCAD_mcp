@@ -19,7 +19,8 @@
     Release (default) or Debug.
 
 .PARAMETER IncludeNet10
-    Force the AutoCAD 2027 leg on or off. Omit to auto-detect the .NET 10 SDK.
+    KEMET: the AutoCAD 2027 leg is required by default and the build stops if
+    the .NET 10 SDK is missing. Pass -IncludeNet10:$false to leave it out.
 
 .PARAMETER SkipBundle
     Compile only; do not stage the bundle folder.
@@ -95,9 +96,15 @@ if ($PSBoundParameters.ContainsKey('IncludeNet10')) {
         throw 'IncludeNet10 was requested but no .NET 10 SDK is installed. Install it or drop the switch.'
     }
 } else {
-    $buildNet10 = $hasNet10
-    if ($buildNet10) { Write-Ok '.NET 10 SDK found - AutoCAD 2027 leg will be built.' }
-    else { Write-Warn '.NET 10 SDK not found - skipping the AutoCAD 2027 leg.' }
+    # KEMET: the Kemet bundle always carries AutoCAD 2021-2027. Upstream skipped
+    # the 2027 leg with only a warning when the .NET 10 SDK was missing, so the
+    # bundle's contents depended on which PC built it. Now the build stops
+    # instead. To build without 2027 on purpose, pass -IncludeNet10:$false.
+    if (-not $hasNet10) {
+        throw '.NET 10 SDK not found. It is needed for the AutoCAD 2027 leg (AutoCAD 2027 itself is not). Install the .NET 10 SDK, or pass -IncludeNet10:$false to build without 2027.'
+    }
+    $buildNet10 = $true
+    Write-Ok '.NET 10 SDK found - AutoCAD 2027 leg will be built.'
 }
 
 # ---------------------------------------------------------------------------

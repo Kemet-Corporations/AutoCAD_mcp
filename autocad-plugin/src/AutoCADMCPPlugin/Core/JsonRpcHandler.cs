@@ -69,8 +69,10 @@ namespace AutoCADMCPPlugin.Core
             // ---- Safety gate: read-only mode ---------------------------------
             if (Settings.ReadOnly && command.IsWrite)
             {
-                var msg = $"Server is in read-only mode; '{method}' would modify the drawing. " +
-                          "Disable with set_server_options({\"read_only\": false}).";
+                // KEMET: upstream told the AI how to switch read-only off. Only the user can now
+                // (set_server_options refuses it over the wire), so say who to ask instead.
+                var msg = $"Read-only mode is on; '{method}' would modify the drawing. " +
+                          "Ask the user to turn Read-only off in AutoCAD (Kemet AutoCAD Addons > AutoCAD MCP) if this change is wanted.";
                 LogCall(method, false, ErrorCode.ReadOnly, 0, "", command.IsWrite);
                 return CreateErrorResponse(id, InternalError, msg, ErrorCode.ReadOnly);
             }

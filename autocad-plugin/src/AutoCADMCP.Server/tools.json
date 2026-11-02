@@ -4454,8 +4454,8 @@
   },
   {
     "name": "set_server_options",
-    "description": "Change and persist the safety posture.\n\nread_only=True refuses every drawing-modifying tool (safe inspection mode).\nconfirm_destructive=True (default) makes erase/delete/purge tools require\n__confirm=true. audit_log toggles the JSONL activity log.",
-    "summary": "Change and persist the safety posture.",
+    "description": "Tighten the safety posture. Settings can only be turned ON from here.\n\nread_only=True refuses every drawing-modifying tool (safe inspection mode).\nconfirm_destructive=True (default) makes erase/delete/purge tools require\n__confirm=true. audit_log=True records every call in a JSONL activity log.\n\nTurning any of them OFF is refused (errorCode NotAllowed): only the user can,\nin AutoCAD under Kemet AutoCAD Addons > AutoCAD MCP. Ask them if it is needed.",
+    "summary": "Tighten the safety posture. Settings can only be turned ON from here.",
     "inputSchema": {
       "type": "object",
       "properties": {

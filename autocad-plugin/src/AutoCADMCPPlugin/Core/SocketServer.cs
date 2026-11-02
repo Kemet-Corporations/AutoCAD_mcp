@@ -177,15 +177,10 @@ namespace AutoCADMCPPlugin.Core
 
         private static void Log(string message)
         {
+            // KEMET: debug output only. Upstream also wrote to AutoCAD's command line here, but this
+            // runs on the socket threads and the AutoCAD API is not thread-safe; every tool call
+            // opens a connection, so it ran on every call.
             System.Diagnostics.Debug.WriteLine($"[MCP] {message}");
-
-            // Also try to write to AutoCAD command line for visibility
-            try
-            {
-                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-                doc?.Editor?.WriteMessage($"\n[MCP] {message}");
-            }
-            catch { }
         }
     }
 }

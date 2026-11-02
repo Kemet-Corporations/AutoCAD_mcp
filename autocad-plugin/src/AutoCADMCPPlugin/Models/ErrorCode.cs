@@ -37,6 +37,9 @@ namespace AutoCADMCPPlugin.Models
         Timeout,
 
         /// <summary>Unexpected internal failure.</summary>
-        Internal
+        Internal,
+
+        /// <summary>KEMET: not allowed from an AI app (for example turning a safety setting off).</summary>
+        NotAllowed
     }
 }

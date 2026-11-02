@@ -245,7 +245,9 @@ namespace AutoCADMCPPlugin.Commands
                 ["write_tool_count"] = writeCount,
                 ["destructive_tool_count"] = destructiveCount,
                 ["destructive_tools"] = destructive,
-                ["options"] = Settings.ToJson()
+                ["options"] = Settings.ToJson(),
+                // KEMET: lets Kemet - AutoCAD MCP tell "this AutoCAD" from another one on the port.
+                ["pid"] = LocalControl.ProcessId
             };
             return CommandResult.Ok(data);
         }
@@ -273,6 +275,22 @@ namespace AutoCADMCPPlugin.Commands
         public override CommandResult Execute(JObject parameters)
         {
             Settings.EnsureLoaded();
+
+            // KEMET: over the wire (that is, from an AI app) the settings may only be TIGHTENED.
+            // Turning read-only, destructive confirmation or the audit log OFF is for the person at
+            // the PC, through Kemet - AutoCAD MCP (in-process: Core/LocalControl.cs). Checked
+            // before anything changes, so a refused call leaves every setting as it was.
+            var loosening = new System.Collections.Generic.List<string>();
+            if (Turns(parameters["read_only"], false) && Settings.ReadOnly) loosening.Add("read_only");
+            if (Turns(parameters["confirm_destructive"], false) && Settings.ConfirmDestructive) loosening.Add("confirm_destructive");
+            if (Turns(parameters["audit_log"], false) && Settings.AuditLog) loosening.Add("audit_log");
+            if (loosening.Count > 0)
+            {
+                return CommandResult.Fail(ErrorCode.NotAllowed,
+                    "Turning " + string.Join(", ", loosening) + " off is not allowed from an AI app. " +
+                    "Ask the user to change it in AutoCAD: Kemet AutoCAD Addons > AutoCAD MCP (or the KEMETMCP command). " +
+                    "Turning a setting on is allowed.");
+            }
 
             bool changed = false;
 
@@ -308,6 +326,19 @@ namespace AutoCADMCPPlugin.Commands
             var data = Settings.ToJson();
             data["message"] = "Server options updated and saved.";
             return CommandResult.Ok(data);
+        }
+
+        /// <summary>
+        /// True when the parameter is present and means the given boolean, read exactly the way
+        /// the code below applies it (Value&lt;bool&gt;, which also accepts "false", 0 and so on),
+        /// so the loosening check cannot be side-stepped with a string. A value that cannot be
+        /// read as a boolean is treated as a request to loosen: refused rather than guessed.
+        /// </summary>
+        private static bool Turns(JToken token, bool value)
+        {
+            if (token == null || token.Type == JTokenType.Null) return false;
+            try { return token.Value<bool>() == value; }
+            catch { return !value; }
         }
     }
 }

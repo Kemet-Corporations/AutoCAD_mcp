@@ -25,7 +25,7 @@
   <!-- Support AutoCAD 2021 (R24.0) through 2027 (R26.0) -->
   <RuntimeRequirements
     OS="Win64"
-    Platform="AutoCAD"
+    Platform="AutoCAD*"
     SeriesMin="R24.0"
     SeriesMax="R26.0" />
 
